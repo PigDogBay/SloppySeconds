@@ -1,0 +1,70 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+**Sloppy Seconds** is a ZX Spectrum Next game written in **Z80N assembly** and assembled with **sjasmplus** into a single `.nex` file.
+- `description.txt`: the full game spec (story, levels, graphics, sounds, controls, screen flow). It's the source of truth, so re-read it before designing features.
+- `GameLayout.jpeg`: a hand-drawn sketch of the main game screen.
+
+## Commands
+
+```sh
+make          # assemble src/main.asm -> build/sloppy.nex (+ .lst listing, .sld for DeZog)
+make run      # build, then launch in ZEsarUX (TBBlue machine, fast boot, --snap the .nex)
+make clean
+```
+
+There are no automated tests. To verify a change, build it with zero warnings, check addresses and bytes in `build/sloppy.lst`, then launch `make run` (in the background, since the GUI stays open) and ask the user what they see. Claude can't see the emulator window. `make run` was confirmed working on 2026-10-31.
+
+## Code architecture
+
+- `src/main.asm` is the only file passed to sjasmplus. It `INCLUDE`s every other module and ends with the `SAVENEX` block that writes the `.nex`. Add new modules there.
+- Code, data and stack all live at `$8000-$BFFF` (bank 2), and an `ASSERT` enforces that. **MMU6 (`$C000`) is used as a paging window** for drawing into Layer 2, so nothing may live there. Code that pages MMU6 must restore it to `MMU6_DEFAULT`.
+- **Layer 2 is 320x256 in 16K bank 9** (8K pages 18–27). Its memory is **column-major**: byte = `x*256 + y`, and each 8K page holds 32 columns.
+- Sprites are set to show over the border, so **sprite coordinates equal Layer 2 pixel coordinates** (0–319, 0–255). Colours use the default RRRGGGBB palette, where `$E3` is transparent.
+- Frame timing: interrupts are off (`di`). `wait_frame` polls the raster line (Next registers `$1E`/`$1F`) for line 224, just below the 320x256 area. If music or AY sound effects need a steady tick, add an IM2 handler.
+- Input: `input_read` merges QAOP + Space with Kempston into one byte, `input`, using the Kempston bit layout (`INPUT_*` bit numbers).
+- Levels are **data-driven**. `src/levels.asm` has a `LEVEL` struct table holding pipes, colours, quota, ooze delay, belt speed, enemy flags (`LVF_*`) and a name pointer. Gameplay should read this table and never branch on the level number. The speed values are placeholders to tune.
+- **State machine** (`src/state.asm`): each `ST_*` state has an `*_enter` routine (called once by `change_state`, draws the screen) and an `*_update` routine (called every frame from `main_loop`). To switch state from an update routine, use `ld a, ST_x` / `jp change_state`. Full-screen redraws are wrapped in `screen_begin` / `screen_end`, which blank Layer 2 and hide sprites. Resuming from pause sets `game_state` directly so the level isn't reset. The screens are in `src/screens.asm`; PLAYING and PAUSED are in `src/playing.asm`.
+- **Text** (`src/text.asm`): uses the 48K ROM font at `$3D00`, which `start` pages in through ports `$7FFD`/`$1FFD` (confirmed rendering in ZEsarUX on 2026-10-31). Swap `FONT_BASE` to use a custom font. `TEXT x,y,colour,scale` sets the style (scale 1 or 2). `print_centred` handles lines separated by 13. Build strings that contain numbers with `str_start` / `str_append` / `str_append_u8` into `strbuf`. The `FILL_RECT` macro is in `layer2.asm`. Macros must be defined before use, so keep `layer2.asm` and `text.asm` early in the include list.
+- Input exposes `input` (held) and `input_new` (pressed this frame). Use `input_new` for menus and actions. BREAK is Caps Shift + Space and doesn't count as fire.
+- **Gameplay modules:** `joe.asm` (movement, bucket), `pipes.asm` (each pipe cycles WAIT → OOZE → FALL → SPLAT), `tubs.asm` (5 tubs on a 400px belt loop moving right to left; the colour cycles on wrap), `hud.asm` (`add_cynicism` / `add_wages` set `hud_dirty` bits, and `hud_update` redraws only what changed) and `playing.asm` (the per-frame order, fire handling and win/lose checks). `level_load` copies the current `LEVEL` record into the `cur_*` variables, and gameplay reads those.
+- **Gameplay rules** (tunable constants):
+  - **One drop fills the bucket** (`BUCKET_CAPACITY` = 1, set by the user).
+  - **A full bucket empties automatically when it touches a tub**, with no button (set by the user). The check runs every frame after the belt moves.
+  - Fire only bangs pipes.
+  - Drops that hit a full bucket fall through it.
+  - Touching a wrong-colour tub loses the slop without counting.
+  - Each missed drop adds `CYNICISM_MISS` = 4.
+  - Wages: catch 1p, bang 1p, correct tub 10p.
+- **Sprites:** the placeholder patterns are drawn in code (`PAT_RECT` into `pat_buf`, then `pat_upload`). `PAT_*` and `SPR_*` slot constants are in `sprites.asm`, and higher sprite slots draw on top. The bucket pattern is rebuilt whenever its contents change. Slop colour index → palette colour is in the `slop_colours` table.
+- The `IX`/`IY` registers are used freely (interrupts are off, so the ROM never needs `IY`). The pipe loops use IX = runtime `PIPE` record and IY = static `pipe_slots` geometry.
+- `make DEBUG=1` builds in cheat keys: **1** finishes the level and **2** maxes out cynicism.
+
+## Toolchain (macOS arm64, under `/Users/mark/work/Next/tools/`)
+
+None of these tools are on `PATH`; the Makefile uses absolute paths (`SJASMPLUS`, `ZESARUX`, both overridable).
+- **sjasmplus** v1.21: use the native build at `sjasmplus-v21/build-arm64/sjasmplus`. The `sjasmplus-v21/sjasmplus` binary there is x86_64 and won't run (no Rosetta).
+- **gfx2next**: `Gfx2Next/build/gfx2next`. Converts PNG/BMP into Next sprites, Layer 2 bitmaps and palettes.
+- **ZEsarUX** 13.0 (the user's preferred emulator): `/Applications/zesarux.app/Contents/MacOS/zesarux`. It has no `--smartload` flag; load files with `--snap file.nex`. `--tbblue-fast-boot-mode` disables divMMC, so the esxdos handler won't work in that mode. Check flags with `--help` / `--experthelp`.
+- **CSpect** is a Windows `.exe` that needs mono, which isn't installed. The **z88dk** and **DeZog** directories are empty.
+
+Ask the user before installing anything.
+
+## Key design constraints (from the spec)
+
+- Hardware: **Layer 2 at 320x256** for backgrounds and **hardware sprites** for actors. Use the **AY chips** for all sound and music.
+- Sprite sizes: Joe 16x32 plus a 16x16 bucket; cockroach 16x16; Mr Knut and Chairman Fumduck 16x32 each.
+- Screen layout (from the sketch): a HUD across the top with the `CYNICISM` bar (0–100, **reset to 0 at the start of every level** — user's choice) on the left and `WAGES: NNp` (the score) on the right. Rusty pipes come out of the left and right walls at two heights. A conveyor belt with tubs runs **right to left** along the bottom.
+- Core loop: slop oozes from the pipes, and pressing fire next to a pipe bangs it so the slop flows faster. Joe catches slop in his bucket and drops it into the tub of the same colour. Missed slop splats and raises cynicism. Vending treats lower cynicism and score points.
+- **5 levels**, one per working day ("all 8 levels" in `description.txt` is a typo). The user wants the day name shown wherever a level number would be ("MONDAY", not "LEVEL 1"); the `LEVEL.day` field and `str_append_day` handle it. The spec's names stay as subtitles:
+  1. Monday: Apprenticeship
+  2. Tuesday: Get on with it!
+  3. Wednesday: El Stompo, which adds cockroaches that you stomp with fire.
+  4. Thursday: Meet Mr Knut, a random-walking manager who stuns Joe and adds cynicism.
+  5. Friday: Knackered, which adds Chairman Fumduck (more damage) and a faster belt.
+- **Level quota = successful deposits** (a full bucket emptied into the tub of the matching colour), not number of colours: **5, 6, 10, 10, 15**. Wrong-tub deposits don't count; they play an error sound.
+- Screen flow: Title → Level intro → Game → Level complete → (next level). From the game, cynicism at max leads to the "quit" ending (a beach), and finishing all levels leads to the "retire" ending (gold clock and grave).
+- Controls: QAOP + Space, or a Kempston joystick. BREAK pauses, with options to quit or continue.

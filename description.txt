@@ -1,0 +1,109 @@
+Sloppy Seconds
+==============
+
+A game for the ZX Spectrum Next
+
+Installed Tools
+---------------
+VSCode
+ZEsarUX (my prefferred emulator)
+In /Users/mark/work/Next/tools/
+ sjasmplus-v21
+ z88dk
+ Dezog
+ Gfx2Next
+ CSpect
+
+Ask if you need me to install other tools
+
+Don't mind if you code it in Z80N, C or ZX Next BASIC
+
+Overview
+--------
+You are Joe working at the Sideways factory, you must use your bucket to collect the slop that is slowly oozing out of the pipes.
+Pressing fire make joe bang the pipe to make the slop ooze out faster.
+When the slop is in the bucket, joe must deposit the slop into the correct coloured tub, red slop goes into the red tub.
+The tubs are on a conveyour belt, moving right to left. The conveyer belt is at the bottom of the screen.
+
+The slop will drop onto the floor and disappear if not collected,  missed slop will increase Joe's 'cynicism meter'
+When Joes cynicism meter hits Max (0-100), he will hand his notice in and quit.
+Occassionally a vending machine treat will appear, eg coffee, chocolate bar, fruit, collecting this will decrease Joe's cyncism and score points.
+
+
+Scoring: collecting slop, banging the pipe, depositing slop into the correct tub, collecting treats, stomping cockroaches.
+
+
+Graphics
+--------
+Main title screen a depiction of the Sideways Factory with a sullen Joe shambling thru the gates 
+Main game - 1950's British factory floor, pipes should be rusty steel
+Joe 16x32 sprite, holding a bucket (16x16), Joe wears an scruffy old cap and overalls, fag end hangs from his mouth
+Coachroach 16x16
+Mr Knut, 16x32, bald on top, white shirt and blue tie
+Chairman 16x32, Fumduck, wears a suit, bushy hair, sun glasses, million dollar smile
+
+Game over - sunny beach, sea, palm trees, cocktails
+Game completed - Crappy cheap gold clock and a early grave (RIP) with Joe's name on it
+
+Make use of L2 (320x256), Hardware Sprites
+
+
+Sounds
+------
+Use the AY chips for sound and music
+Banging pipes
+Collecting slop
+Bucket full
+Depositing slop into correct bucket
+Depositing into wrong bucket (error type sound)
+Stomping cockroach
+Bumping into Mr Knut
+Bumping into Chairman Fumduck
+falling slop, slop splat
+Game over dity, then happy 'beach' music
+Game success, chirpy notes then funeral march music
+Title music - 1970's jaunty UK sitcom style music
+
+
+
+Nota Bene
+---------
+Pipes can dispense different colours
+
+
+The gane is split into 5 stages,
+
+Level 1 'Apprenticeship'
+Easy, slow slop, 2 colours red and blue, 2 pipes, 2 types of tub. Must collect 5 lots of slop.
+
+Level 2 'Get on with it!'
+4 pipes, 3 colours, 6 types of slop need to be collected, , slop oozes slightly faster
+
+Level 3 'El Stompo'
+4 pipes, 4 colours, 10 types of slop, slop oozes slightly faster
+cockroaches appear - they slowly increase you cynicism, Joe must walk up to them and press fire to stomp them
+
+Level 4 'Meet Mr Knut'
+4 pipes, 5 colours/tubs, 10 to collect slop, slop oozes slightly faster
+Mr Knut (Joes manager) makes an appearance, he will move around the screen in a random pattern, if Joe bumps into him Mr Knut will tell joe off for a few seconds (delaying Joe) and increase his cynicism.
+
+Level 5 'Knackered'
+6 pipes, 7 colours, 7 tub types, conveyer belt speeds up, slop ooze speeds up
+New Character appears, Chairmain Fumduck, he acts like Mr Knut but applies more damage (i mean cynicism) to joe.
+
+
+Completing this level finishes the game and Joe retires with a cheap gold clock and then shortly dies due to ill heath.
+If Joe's cynicism hits maximum, he storms into the Chairman's office and tells him to 'To shove the job where the sun don't shine', Joe retires to a nice sunny beach.
+
+Screens
+-------
+
+[Title Screen] -> [Level name/ brief description] -> [Main Game] -> [Level complete] -> [Next level, back to level name/description]
+                                                                 -> [Game Over - Joe quits]
+                                                                 -> [Joe completes all 8 levels and retires with a cheap Gold Clock] 
+
+
+Controls
+--------
+Keyboard QAOP-Space or kempston Joystick
+Break - pauses with option to quit or continue
