@@ -82,7 +82,9 @@ level_complete_enter:
         TEXT 0, 216, COL_YELLOW, 1
         ld hl, str_press_fire
         call print_centred
-        jp screen_end
+        call screen_end
+        ld hl, tune_home
+        jp music_start
 
 level_complete_update:
         ld a, (input_new)

@@ -364,6 +364,20 @@ beach_bass:
         db D4D|F2, D4D|C3, D4|F2                                        ; F
         db MUS_LOOP
 
+;-----------------------------------------------------------------------------
+; Home time: a sweet two-bar ditty for the end of the day, at 125 bpm.
+; Chords: C - F | Dm G - C. Plays once.
+;-----------------------------------------------------------------------------
+home_melody:
+        db D8|E5, D8|G5, D4|C6, D8|B5, D8|G5, D4|A5
+        db D8|F5, D8|A5, D8|G5, D8|E5, D2|C5
+        db MUS_END
+home_bass:
+        db D4|C3, D4|G3, D4|F3, D4|A3
+        db D4|D3, D4|G2, D2|C3
+        db MUS_END
+
+tune_home:      TUNE home_melody, home_bass, mus_durations_slow, $04, $90
 tune_theme:     TUNE theme_melody, theme_bass, mus_durations, $05, $80
 tune_jingle:    TUNE jingle_melody, jingle_bass, mus_durations, $05, $80
 tune_retire:    TUNE retire_melody, retire_bass, mus_durations, $05, $80
