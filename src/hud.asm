@@ -28,6 +28,32 @@ add_cynicism:
         set HUD_CYNICISM, (hl)
         ret
 
+; In: A = amount. Stops at 0.
+sub_cynicism:
+        ld b, a
+        ld a, (cynicism)
+        sub b
+        jr nc, 1F
+        xor a
+1:      ld (cynicism), a
+        ld hl, hud_dirty
+        set HUD_CYNICISM, (hl)
+        ret
+
+; In: A = pence. Stops at 0.
+sub_wages:
+        ld e, a
+        ld d, 0
+        ld hl, (wages)
+        or a
+        sbc hl, de
+        jr nc, 1F
+        ld hl, 0
+1:      ld (wages), hl
+        ld hl, hud_dirty
+        set HUD_WAGES, (hl)
+        ret
+
 ; In: A = pence.
 add_wages:
         ld hl, (wages)

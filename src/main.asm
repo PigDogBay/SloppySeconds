@@ -94,8 +94,10 @@ read_raster_line:
         INCLUDE "pipes.asm"
         INCLUDE "tubs.asm"
         INCLUDE "hud.asm"
+        INCLUDE "snacks.asm"
         INCLUDE "playing.asm"
         INCLUDE "screens.asm"
+        INCLUDE "title.asm"
 
 ;-----------------------------------------------------------------------------
 ; Stack (code, data and stack must all stay in bank 2, $8000-$BFFF, because

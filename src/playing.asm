@@ -6,7 +6,7 @@
 ; HUD, then check for level complete (deposits >= quota) or game over
 ; (cynicism maxed).
 ;
-; Build with `make DEBUG=1` for cheat keys: 1 = finish level, 2 = Joe quits.
+; Test keys (left out by `make RELEASE=1`): N = finish level, 2 = Joe quits.
 ;-----------------------------------------------------------------------------
 
 CYNICISM_MAX        equ 100             ; Joe quits at this
@@ -21,6 +21,7 @@ playing_enter:
         call joe_reset
         call pipes_reset
         call tubs_reset
+        call snacks_reset
         call draw_playfield
         jp screen_end
 
@@ -31,7 +32,7 @@ playing_update:
         ld a, ST_PAUSED
         jp change_state
 1:
-        IFDEF DEBUG
+        IFNDEF RELEASE
         bit INPUT_DEBUG1, a
         jr z, 1F
         ld a, (cur_quota)
@@ -46,6 +47,7 @@ playing_update:
         ENDIF
 
         call joe_update
+        call snacks_update
         ld a, (input_new)
         bit INPUT_FIRE, a
         call nz, pipes_bang

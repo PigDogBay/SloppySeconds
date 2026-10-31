@@ -18,6 +18,7 @@ PAT_BUCKET          equ 2               ; rebuilt whenever the bucket changes
 PAT_DROP            equ 3               ; + colour index
 PAT_SPLAT           equ PAT_DROP + SLOP_COLOURS
 PAT_TUB             equ PAT_SPLAT + SLOP_COLOURS
+PAT_SNACK           equ PAT_TUB + SLOP_COLOURS  ; coffee, chocolate, apple
 
 ; --- Sprite slots (draw order: later = on top) ---
 SPR_JOE_TOP         equ 0
@@ -25,6 +26,7 @@ SPR_JOE_BOTTOM      equ 1
 SPR_TUB             equ 2               ; 5 tubs
 SPR_DROP            equ 7               ; 6 drops, one per pipe
 SPR_BUCKET          equ 13
+SPR_SNACK           equ 14
 
 ATTR2_MIRROR_X      equ %00001000
 
@@ -43,6 +45,7 @@ sprites_init:
         nextreg NR_SPRITE_LAYERS, %00000011 ; visible, over border, order SLU
         call sprites_hide_all
         call build_joe_patterns
+        call build_snack_patterns
         jp build_slop_patterns
 
 ; In: A = sprite slot, HL = x (9 bits), E = y, D = pattern,
@@ -182,6 +185,36 @@ build_joe_patterns:
         PAT_RECT 3, 14, 5, 2, COL_BLACK     ; boots
         PAT_RECT 9, 14, 5, 2, COL_BLACK
         ld a, PAT_JOE_BOTTOM
+        jp pat_upload
+
+; Vending machine snacks: coffee, chocolate bar, apple.
+build_snack_patterns:
+        call pat_clear                      ; mug of coffee
+        PAT_RECT 6, 1, 1, 3, COL_GREY       ; steam
+        PAT_RECT 9, 2, 1, 2, COL_GREY
+        PAT_RECT 3, 5, 9, 10, COL_WHITE     ; mug
+        PAT_RECT 12, 7, 3, 1, COL_WHITE     ; handle
+        PAT_RECT 14, 7, 1, 5, COL_WHITE
+        PAT_RECT 12, 11, 3, 1, COL_WHITE
+        PAT_RECT 4, 5, 7, 2, COL_COFFEE
+        ld a, PAT_SNACK + 0
+        call pat_upload
+
+        call pat_clear                      ; chocolate bar
+        PAT_RECT 1, 5, 14, 7, COL_WRAPPER
+        PAT_RECT 1, 5, 3, 7, COL_COFFEE     ; bitten end
+        PAT_RECT 12, 5, 3, 7, COL_GREY      ; foil
+        PAT_RECT 5, 7, 6, 3, COL_YELLOW     ; label
+        ld a, PAT_SNACK + 1
+        call pat_upload
+
+        call pat_clear                      ; apple
+        PAT_RECT 8, 1, 1, 4, COL_COFFEE     ; stalk
+        PAT_RECT 9, 2, 3, 2, $1C            ; leaf
+        PAT_RECT 4, 5, 8, 10, $E0
+        PAT_RECT 3, 7, 10, 6, $E0
+        PAT_RECT 5, 7, 2, 2, COL_WHITE      ; shine
+        ld a, PAT_SNACK + 2
         jp pat_upload
 
 ; Drop, splat and tub patterns for every slop colour.

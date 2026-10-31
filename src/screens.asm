@@ -1,9 +1,9 @@
 ;-----------------------------------------------------------------------------
-; Full-screen states: title, level intro, level complete and the two endings.
+; Full-screen states: level intro, level complete and the two endings.
+; (The title screen is in title.asm.)
 ; Backgrounds are placeholder rectangles until real art (gfx2next) exists.
 ;-----------------------------------------------------------------------------
 
-COL_BRICK           equ $A4
 COL_SKY             equ $5F
 COL_SEA             equ $0B
 COL_SAND            equ $F9
@@ -18,41 +18,6 @@ wait_fire_then:
         bit INPUT_FIRE, a
         ret z
         ld a, b
-        jp change_state
-
-;--- Title -------------------------------------------------------------------
-title_enter:
-        call screen_begin
-        ld a, COL_BLACK
-        call l2_clear
-        FILL_RECT 40, 120, 240, 100, COL_BRICK      ; the factory
-        FILL_RECT 136, 164, 48, 56, COL_BLACK       ; the gates
-        FILL_RECT 0, 220, SCREEN_W, 36, COL_DARK    ; the yard
-
-        TEXT 0, 24, COL_YELLOW, 2
-        ld hl, str_title
-        call print_centred
-        TEXT 0, 48, COL_WHITE, 1
-        ld hl, str_title_sub
-        call print_centred
-        TEXT 0, 76, COL_WHITE, 1
-        ld hl, str_title_controls
-        call print_centred
-        TEXT 0, 132, COL_YELLOW, 1
-        ld hl, str_factory_sign
-        call print_centred
-        TEXT 0, 234, COL_YELLOW, 1
-        ld hl, str_clock_on
-        call print_centred
-        jp screen_end
-
-title_update:
-        ld a, (input_new)
-        bit INPUT_FIRE, a
-        ret z
-        call rand_mix
-        call new_game
-        ld a, ST_LEVEL_INTRO
         jp change_state
 
 ;--- Level intro -------------------------------------------------------------
@@ -199,12 +164,6 @@ print_wages_centred:
         jp print_centred
 
 ;--- Strings -----------------------------------------------------------------
-str_title:          db "SLOPPY SECONDS", 0
-str_title_sub:      db "LIFE AT THE SIDEWAYS FACTORY", 0
-str_title_controls: db "QAOP + SPACE OR KEMPSTON JOYSTICK", 13
-                    db "CAPS SHIFT + SPACE (BREAK) TO PAUSE", 0
-str_factory_sign:   db "SIDEWAYS FACTORY", 0
-str_clock_on:       db "PRESS FIRE TO CLOCK ON", 0
 str_fill:           db "EMPTY ", 0
 str_buckets:        db " BUCKETS INTO THE RIGHT TUBS", 0
 str_press_fire:     db "PRESS FIRE", 0

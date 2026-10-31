@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 make          # assemble src/main.asm -> build/sloppy.nex (+ .lst listing, .sld for DeZog)
 make run      # build, then launch in ZEsarUX (TBBlue machine, fast boot, --snap the .nex)
 make clean
+make RELEASE=1   # build without the test keys
 ```
 
 There are no automated tests. To verify a change, build it with zero warnings, check addresses and bytes in `build/sloppy.lst`, then launch `make run` (in the background, since the GUI stays open) and ask the user what they see. Claude can't see the emulator window. `make run` was confirmed working on 2026-10-31.
@@ -23,12 +24,12 @@ There are no automated tests. To verify a change, build it with zero warnings, c
 - `src/main.asm` is the only file passed to sjasmplus. It `INCLUDE`s every other module and ends with the `SAVENEX` block that writes the `.nex`. Add new modules there.
 - Code, data and stack all live at `$8000-$BFFF` (bank 2), and an `ASSERT` enforces that. **MMU6 (`$C000`) is used as a paging window** for drawing into Layer 2, so nothing may live there. Code that pages MMU6 must restore it to `MMU6_DEFAULT`.
 - **Layer 2 is 320x256 in 16K bank 9** (8K pages 18–27). Its memory is **column-major**: byte = `x*256 + y`, and each 8K page holds 32 columns.
-- Sprites are set to show over the border, so **sprite coordinates equal Layer 2 pixel coordinates** (0–319, 0–255). Colours use the default RRRGGGBB palette, where `$E3` is transparent.
+- Sprites are set to show over the border, so **sprite coordinates equal Layer 2 pixel coordinates** (0–319, 0–255). Colours use the default RRRGGGBB palette, where `$E3` is transparent. Blue has only 2 bits, so `$DB` comes out lavender rather than grey; use `$B6` or `$DA` for neutral or warm greys.
 - Frame timing: interrupts are off (`di`). `wait_frame` polls the raster line (Next registers `$1E`/`$1F`) for line 224, just below the 320x256 area. If music or AY sound effects need a steady tick, add an IM2 handler.
 - Input: `input_read` merges QAOP + Space with Kempston into one byte, `input`, using the Kempston bit layout (`INPUT_*` bit numbers).
 - Levels are **data-driven**. `src/levels.asm` has a `LEVEL` struct table holding pipes, colours, quota, ooze delay, belt speed, enemy flags (`LVF_*`) and a name pointer. Gameplay should read this table and never branch on the level number. The speed values are placeholders to tune.
-- **State machine** (`src/state.asm`): each `ST_*` state has an `*_enter` routine (called once by `change_state`, draws the screen) and an `*_update` routine (called every frame from `main_loop`). To switch state from an update routine, use `ld a, ST_x` / `jp change_state`. Full-screen redraws are wrapped in `screen_begin` / `screen_end`, which blank Layer 2 and hide sprites. Resuming from pause sets `game_state` directly so the level isn't reset. The screens are in `src/screens.asm`; PLAYING and PAUSED are in `src/playing.asm`.
-- **Text** (`src/text.asm`): uses the 48K ROM font at `$3D00`, which `start` pages in through ports `$7FFD`/`$1FFD` (confirmed rendering in ZEsarUX on 2026-10-31). Swap `FONT_BASE` to use a custom font. `TEXT x,y,colour,scale` sets the style (scale 1 or 2). `print_centred` handles lines separated by 13. Build strings that contain numbers with `str_start` / `str_append` / `str_append_u8` into `strbuf`. The `FILL_RECT` macro is in `layer2.asm`. Macros must be defined before use, so keep `layer2.asm` and `text.asm` early in the include list.
+- **State machine** (`src/state.asm`): each `ST_*` state has an `*_enter` routine (called once by `change_state`, draws the screen) and an `*_update` routine (called every frame from `main_loop`). To switch state from an update routine, use `ld a, ST_x` / `jp change_state`. Full-screen redraws are wrapped in `screen_begin` / `screen_end`, which blank Layer 2 and hide sprites. Resuming from pause sets `game_state` directly so the level isn't reset. The title screen is in `src/title.asm`: the Sideways factory scene, loosely based on the user's `Factory.jpeg` photo of the incinerator, with Joe walking into the loading bay. The other screens are in `src/screens.asm`; PLAYING and PAUSED are in `src/playing.asm`.
+- **Text** (`src/text.asm`): uses the 48K ROM font at `$3D00`, which `start` pages in through ports `$7FFD`/`$1FFD` (confirmed rendering in ZEsarUX on 2026-10-31). Swap `FONT_BASE` to use a custom font. `TEXT x,y,colour,scale` sets the style (scale 1 or 2). `print_centred` handles lines separated by 13. Build strings that contain numbers with `str_start` / `str_append` / `str_append_u8` into `strbuf`. The `FILL_RECT` and `HALF_DISC` macros are in `layer2.asm`. `HALF_DISC` draws a flat-bottomed half circle, optionally with a window-pane grid, for arches, trees and clouds. Macros must be defined before use, so keep `layer2.asm` and `text.asm` early in the include list.
 - Input exposes `input` (held) and `input_new` (pressed this frame). Use `input_new` for menus and actions. BREAK is Caps Shift + Space and doesn't count as fire.
 - **Gameplay modules:** `joe.asm` (movement, bucket), `pipes.asm` (each pipe cycles WAIT → OOZE → FALL → SPLAT), `tubs.asm` (5 tubs on a 400px belt loop moving right to left; the colour cycles on wrap), `hud.asm` (`add_cynicism` / `add_wages` set `hud_dirty` bits, and `hud_update` redraws only what changed) and `playing.asm` (the per-frame order, fire handling and win/lose checks). `level_load` copies the current `LEVEL` record into the `cur_*` variables, and gameplay reads those.
 - **Gameplay rules** (tunable constants):
@@ -39,9 +40,11 @@ There are no automated tests. To verify a change, build it with zero warnings, c
   - Touching a wrong-colour tub loses the slop without counting.
   - Each missed drop adds `CYNICISM_MISS` = 4.
   - Wages: catch 1p, bang 1p, correct tub 10p.
+  - Cynicism resets to 0 at the start of each level.
+  - **Snacks** (`snacks.asm`): one at a time, every 10–15 s, on the half of the floor away from Joe. Each **lasts 5 s** (user's choice) and flashes for the last 1.5 s. Coffee −10, chocolate −15, apple −8 cynicism. **Snacks cost wages** (user's choice): coffee 5p, chocolate 8p, apple 4p, via `sub_wages`, which stops at 0. Use `sub_cynicism` to lower cynicism (it stops at 0).
 - **Sprites:** the placeholder patterns are drawn in code (`PAT_RECT` into `pat_buf`, then `pat_upload`). `PAT_*` and `SPR_*` slot constants are in `sprites.asm`, and higher sprite slots draw on top. The bucket pattern is rebuilt whenever its contents change. Slop colour index → palette colour is in the `slop_colours` table.
 - The `IX`/`IY` registers are used freely (interrupts are off, so the ROM never needs `IY`). The pipe loops use IX = runtime `PIPE` record and IY = static `pipe_slots` geometry.
-- `make DEBUG=1` builds in cheat keys: **1** finishes the level and **2** maxes out cynicism.
+- Test keys are on by default: **N** finishes the level and **2** maxes out cynicism (Joe quits). `make RELEASE=1` leaves them out (`IFNDEF RELEASE` in `playing_update`).
 
 ## Toolchain (macOS arm64, under `/Users/mark/work/Next/tools/`)
 

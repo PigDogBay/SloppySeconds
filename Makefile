@@ -4,17 +4,18 @@ ZESARUX   ?= /Applications/zesarux.app/Contents/MacOS/zesarux
 BUILD := build
 NEX   := $(BUILD)/sloppy.nex
 
-# make DEBUG=1 enables cheat keys (1 = finish level, 2 = Joe quits)
+# Test keys (N = finish level, 2 = Joe quits) are built in by default;
+# make RELEASE=1 leaves them out.
 ASMFLAGS :=
-ifdef DEBUG
-ASMFLAGS += -DDEBUG
+ifdef RELEASE
+ASMFLAGS += -DRELEASE
 endif
 
 .PHONY: all run clean FORCE
 
 all: $(NEX)
 
-# Always reassemble (it takes a moment, and DEBUG may have changed).
+# Always reassemble (it takes a moment, and RELEASE may have changed).
 $(NEX): FORCE | $(BUILD)
 	$(SJASMPLUS) --zxnext --fullpath --msg=war $(ASMFLAGS) \
 		--lst=$(BUILD)/sloppy.lst --sld=$(BUILD)/sloppy.sld \

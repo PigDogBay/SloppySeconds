@@ -44,6 +44,8 @@ COL_PIPE_DARK       equ $64     ; rusty steel
 COL_PIPE_LIGHT      equ $A8
 COL_BAR_BG          equ $24
 COL_CYNICISM        equ $E0
+COL_COFFEE          equ $88
+COL_WRAPPER         equ $27
 
 ; --- Screen geometry (Layer 2 320x256, sprite coords match 1:1) ---
 SCREEN_W            equ 320

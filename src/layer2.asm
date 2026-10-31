@@ -116,3 +116,139 @@ rect_w:         dw 0
 rect_y:         db 0
 rect_h:         db 0
 rect_colour:    db 0
+
+;-----------------------------------------------------------------------------
+; Half disc with a flat bottom (arched windows, tree canopies, cloud puffs).
+; Parameters in disc_* (use HALF_DISC). If disc_grid is non-zero, the rim and
+; a grid every GRID_MASK+1 pixels are drawn in that colour (window panes).
+; Columns off the screen are skipped. r must be 1..127.
+;-----------------------------------------------------------------------------
+GRID_MASK           equ 3               ; panes every 4 pixels
+
+l2_half_disc:
+        ld a, (disc_r)
+        ld d, a
+        ld e, a
+        mul d, e
+        ld (disc_r2), de
+        ld a, (disc_r)
+        neg
+        ld (disc_dx), a
+.column:
+        ld a, (disc_dx)             ; HL = cx + dx (sign-extended)
+        ld l, a
+        add a, a
+        sbc a, a
+        ld h, a
+        ld de, (disc_cx)
+        add hl, de
+        bit 7, h
+        jr nz, .next                ; x < 0
+        push hl
+        ld de, SCREEN_W
+        or a
+        sbc hl, de
+        pop hl
+        jr nc, .next                ; x >= 320
+        call l2_page_column
+        ld (disc_col_hi), a
+
+        ld a, (disc_dx)             ; |dx| and dx^2
+        bit 7, a
+        jr z, 1F
+        neg
+1:      ld (disc_adx), a
+        ld d, a
+        ld e, a
+        mul d, e
+        ld (disc_dx2), de
+
+        ld b, 0                     ; B = column height: largest h with
+.grow:                              ; dx^2 + h^2 <= r^2
+        ld a, b
+        inc a
+        ld d, a
+        ld e, a
+        mul d, e
+        ld hl, (disc_dx2)
+        add hl, de
+        ex de, hl
+        ld hl, (disc_r2)
+        or a
+        sbc hl, de
+        jr c, .grown
+        inc b
+        jr .grow
+.grown:
+        ld a, b
+        or a
+        jr z, .next
+        ld d, b                     ; D = rows left
+        ld c, 1                     ; C = row number from the bottom
+        ld a, (disc_col_hi)
+        ld h, a
+        ld a, (disc_base)
+        ld l, a
+.row:
+        dec l
+        ld a, (disc_grid)
+        or a
+        jr z, .solid
+        ld a, c
+        cp b
+        jr z, .grid                 ; rim
+        ld a, (disc_adx)
+        or a
+        jr z, .grid                 ; centre bar
+        and GRID_MASK
+        jr z, .grid
+        ld a, c
+        and GRID_MASK
+        jr z, .grid
+.solid:
+        ld a, (disc_colour)
+        jr .plot
+.grid:
+        ld a, (disc_grid)
+.plot:
+        ld (hl), a
+        inc c
+        dec d
+        jr nz, .row
+.next:
+        ld a, (disc_r)
+        ld b, a
+        ld a, (disc_dx)
+        cp b
+        jr z, .done
+        inc a
+        ld (disc_dx), a
+        jp .column
+.done:
+        nextreg NR_MMU6, MMU6_DEFAULT
+        ret
+
+        MACRO HALF_DISC pcx, pbase, pr, pcol, pgrid
+        ld hl, pcx
+        ld (disc_cx), hl
+        ld a, pbase
+        ld (disc_base), a
+        ld a, pr
+        ld (disc_r), a
+        ld a, pcol
+        ld (disc_colour), a
+        ld a, pgrid
+        ld (disc_grid), a
+        call l2_half_disc
+        ENDM
+
+disc_cx:        dw 0
+disc_base:      db 0
+disc_r:         db 0
+disc_colour:    db 0
+disc_grid:      db 0
+disc_dx:        db 0
+disc_adx:       db 0
+disc_col_hi:    db 0
+disc_r2:        dw 0
+disc_dx2:       dw 0
