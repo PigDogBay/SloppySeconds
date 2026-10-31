@@ -40,6 +40,7 @@ start:
 
 main_loop:
         call wait_frame
+        call music_update
         call sfx_update
         call input_read
         call state_update
@@ -90,6 +91,7 @@ read_raster_line:
         INCLUDE "sprites.asm"
         INCLUDE "util.asm"
         INCLUDE "sound.asm"
+        INCLUDE "music.asm"
         INCLUDE "input.asm"
         INCLUDE "levels.asm"
         INCLUDE "state.asm"

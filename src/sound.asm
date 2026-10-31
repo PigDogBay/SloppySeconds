@@ -99,6 +99,10 @@ sfx_update:
         or a
         jr nz, .play
         ld de, $0A00                ; silence channel C
+        call ay_write
+        ld a, (mus_mixer)
+        ld e, a
+        ld d, 7
         jp ay_write
 .play:
         ld a, (sfx_period)
@@ -120,7 +124,8 @@ sfx_update:
         ld d, 10
         call ay_write
 
-        ld l, $3F                   ; mixer: start with everything off
+        ld a, (mus_mixer)           ; mixer: music's A/B bits, C off
+        ld l, a
         ld a, (sfx_mix)
         bit 7, a
         jr nz, 1F

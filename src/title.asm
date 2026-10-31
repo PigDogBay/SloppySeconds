@@ -58,7 +58,8 @@ title_enter:
         ld (joe_x), hl
         ld a, TITLE_STEP_FRAMES
         ld (title_step), a
-        jp screen_end
+        call screen_end
+        jp music_start
 
 title_update:
         ld a, (input_new)

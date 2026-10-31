@@ -42,6 +42,9 @@ state_update_table:
 ; In: A = new state.
 change_state:
         ld (game_state), a
+        push af
+        call music_stop             ; each screen starts its own tune
+        pop af
         ld hl, state_enter_table
         ; fall through
 
