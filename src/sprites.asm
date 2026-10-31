@@ -19,6 +19,8 @@ PAT_DROP            equ 3               ; + colour index
 PAT_SPLAT           equ PAT_DROP + SLOP_COLOURS
 PAT_TUB             equ PAT_SPLAT + SLOP_COLOURS
 PAT_SNACK           equ PAT_TUB + SLOP_COLOURS  ; coffee, chocolate, apple
+PAT_ROACH           equ PAT_SNACK + 3           ; 2 walking frames
+PAT_ROACH_SQUASH    equ PAT_ROACH + 2
 
 ; --- Sprite slots (draw order: later = on top) ---
 SPR_JOE_TOP         equ 0
@@ -27,6 +29,7 @@ SPR_TUB             equ 2               ; 5 tubs
 SPR_DROP            equ 7               ; 6 drops, one per pipe
 SPR_BUCKET          equ 13
 SPR_SNACK           equ 14
+SPR_ROACH           equ 15              ; 3 cockroaches
 
 ATTR2_MIRROR_X      equ %00001000
 
@@ -46,6 +49,7 @@ sprites_init:
         call sprites_hide_all
         call build_joe_patterns
         call build_snack_patterns
+        call build_roach_patterns
         jp build_slop_patterns
 
 ; In: A = sprite slot, HL = x (9 bits), E = y, D = pattern,
@@ -216,6 +220,49 @@ build_snack_patterns:
         PAT_RECT 5, 7, 2, 2, COL_WHITE      ; shine
         ld a, PAT_SNACK + 2
         jp pat_upload
+
+; Cockroach facing right: two leg frames, plus squashed.
+build_roach_patterns:
+        call build_roach_body
+        PAT_RECT 4, 4, 1, 2, COL_ROACH_LEG      ; legs, frame 0
+        PAT_RECT 8, 3, 1, 2, COL_ROACH_LEG
+        PAT_RECT 11, 4, 1, 2, COL_ROACH_LEG
+        PAT_RECT 3, 12, 1, 2, COL_ROACH_LEG
+        PAT_RECT 7, 12, 1, 2, COL_ROACH_LEG
+        PAT_RECT 10, 12, 1, 2, COL_ROACH_LEG
+        ld a, PAT_ROACH
+        call pat_upload
+
+        call build_roach_body
+        PAT_RECT 3, 4, 1, 2, COL_ROACH_LEG      ; legs, frame 1
+        PAT_RECT 7, 3, 1, 2, COL_ROACH_LEG
+        PAT_RECT 10, 4, 1, 2, COL_ROACH_LEG
+        PAT_RECT 4, 12, 1, 2, COL_ROACH_LEG
+        PAT_RECT 8, 12, 1, 2, COL_ROACH_LEG
+        PAT_RECT 11, 12, 1, 2, COL_ROACH_LEG
+        ld a, PAT_ROACH + 1
+        call pat_upload
+
+        call pat_clear                          ; squashed flat
+        PAT_RECT 1, 11, 14, 3, COL_ROACH
+        PAT_RECT 3, 10, 10, 1, COL_ROACH_SHINE
+        PAT_RECT 0, 14, 2, 1, COL_ROACH_LEG
+        PAT_RECT 14, 14, 2, 1, COL_ROACH_LEG
+        PAT_RECT 6, 14, 4, 1, $8C               ; goo
+        ld a, PAT_ROACH_SQUASH
+        jp pat_upload
+
+build_roach_body:
+        call pat_clear
+        PAT_RECT 3, 6, 9, 5, COL_ROACH
+        PAT_RECT 4, 5, 7, 7, COL_ROACH
+        PAT_RECT 6, 6, 3, 1, COL_ROACH_SHINE
+        PAT_RECT 12, 7, 2, 3, COL_ROACH_LEG     ; head
+        PAT_RECT 14, 6, 1, 1, COL_ROACH_LEG     ; feelers
+        PAT_RECT 15, 5, 1, 1, COL_ROACH_LEG
+        PAT_RECT 14, 10, 1, 1, COL_ROACH_LEG
+        PAT_RECT 15, 11, 1, 1, COL_ROACH_LEG
+        ret
 
 ; Drop, splat and tub patterns for every slop colour.
 build_slop_patterns:

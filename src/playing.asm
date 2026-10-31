@@ -1,7 +1,7 @@
 ;-----------------------------------------------------------------------------
 ; PLAYING and PAUSED states
 ;
-; Each frame: move Joe, fire bangs a nearby pipe, run the belt, empty a full
+; Each frame: move Joe, fire stomps a roach or bangs a nearby pipe, run the belt, empty a full
 ; bucket into any tub it touches, run the pipes, draw sprites, refresh the
 ; HUD, then check for level complete (deposits >= quota) or game over
 ; (cynicism maxed).
@@ -14,6 +14,7 @@ CYNICISM_MISS       equ 4               ; per drop that hits the floor
 SCORE_CATCH         equ 1               ; wages in pence
 SCORE_BANG          equ 1
 SCORE_DEPOSIT       equ 10
+SCORE_STOMP         equ 2
 
 playing_enter:
         call screen_begin
@@ -22,6 +23,7 @@ playing_enter:
         call pipes_reset
         call tubs_reset
         call snacks_reset
+        call roaches_reset
         call draw_playfield
         jp screen_end
 
@@ -50,10 +52,11 @@ playing_update:
         call snacks_update
         ld a, (input_new)
         bit INPUT_FIRE, a
-        call nz, pipes_bang
+        call nz, joe_fire
         call tubs_update
         call try_deposit
         call pipes_update
+        call roaches_update
         call tubs_draw
         call joe_draw
         call hud_update
@@ -71,6 +74,12 @@ playing_update:
         ret c
         ld a, ST_LEVEL_COMPLETE
         jp change_state
+
+; Fire: stomp a cockroach at Joe's feet, otherwise bang a pipe.
+joe_fire:
+        call roaches_stomp
+        ret c
+        jp pipes_bang
 
 ; Empty a full bucket into any tub it touches (no button needed).
 ; Out: carry set if the bucket was emptied (right tub or not).

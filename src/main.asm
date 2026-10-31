@@ -95,6 +95,7 @@ read_raster_line:
         INCLUDE "tubs.asm"
         INCLUDE "hud.asm"
         INCLUDE "snacks.asm"
+        INCLUDE "roaches.asm"
         INCLUDE "playing.asm"
         INCLUDE "screens.asm"
         INCLUDE "title.asm"

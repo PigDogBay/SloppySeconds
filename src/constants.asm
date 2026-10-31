@@ -46,6 +46,9 @@ COL_BAR_BG          equ $24
 COL_CYNICISM        equ $E0
 COL_COFFEE          equ $88
 COL_WRAPPER         equ $27
+COL_ROACH           equ $64
+COL_ROACH_SHINE     equ $A8
+COL_ROACH_LEG       equ $24
 
 ; --- Screen geometry (Layer 2 320x256, sprite coords match 1:1) ---
 SCREEN_W            equ 320

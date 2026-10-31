@@ -42,6 +42,7 @@ There are no automated tests. To verify a change, build it with zero warnings, c
   - Wages: catch 1p, bang 1p, correct tub 10p.
   - Cynicism resets to 0 at the start of each level.
   - **Snacks** (`snacks.asm`): one at a time, every 10–15 s, on the half of the floor away from Joe. Each **lasts 5 s** (user's choice) and flashes for the last 1.5 s. Coffee −10, chocolate −15, apple −8 cynicism. **Snacks cost wages** (user's choice): coffee 5p, chocolate 8p, apple 4p, via `sub_wages`, which stops at 0. Use `sub_cynicism` to lower cynicism (it stops at 0).
+  - **Cockroaches** (`roaches.asm`, on levels with `LVF_COCKROACH`, which `level_load` copies into `cur_flags`): up to 3 come in from the sides every 6–11 s and wander the floor. Each adds 1 cynicism every 2 s. Fire with one at Joe's feet stomps it for 2p. Fire handling is in `joe_fire`: stomp first, otherwise bang a pipe.
 - **Sprites:** the placeholder patterns are drawn in code (`PAT_RECT` into `pat_buf`, then `pat_upload`). `PAT_*` and `SPR_*` slot constants are in `sprites.asm`, and higher sprite slots draw on top. The bucket pattern is rebuilt whenever its contents change. Slop colour index → palette colour is in the `slop_colours` table.
 - The `IX`/`IY` registers are used freely (interrupts are off, so the ROM never needs `IY`). The pipe loops use IX = runtime `PIPE` record and IY = static `pipe_slots` geometry.
 - Test keys are on by default: **N** finishes the level and **2** maxes out cynicism (Joe quits). `make RELEASE=1` leaves them out (`IFNDEF RELEASE` in `playing_update`).
