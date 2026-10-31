@@ -34,11 +34,13 @@ start:
 
         call l2_init
         call sprites_init
+        call sfx_init
         ld a, ST_TITLE
         call change_state
 
 main_loop:
         call wait_frame
+        call sfx_update
         call input_read
         call state_update
         jr main_loop
@@ -87,6 +89,7 @@ read_raster_line:
         INCLUDE "text.asm"
         INCLUDE "sprites.asm"
         INCLUDE "util.asm"
+        INCLUDE "sound.asm"
         INCLUDE "input.asm"
         INCLUDE "levels.asm"
         INCLUDE "state.asm"
@@ -96,6 +99,7 @@ read_raster_line:
         INCLUDE "hud.asm"
         INCLUDE "snacks.asm"
         INCLUDE "roaches.asm"
+        INCLUDE "knut.asm"
         INCLUDE "playing.asm"
         INCLUDE "screens.asm"
         INCLUDE "title.asm"

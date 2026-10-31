@@ -24,6 +24,13 @@ joe_reset:
         jp bucket_rebuild
 
 joe_update:
+        ld a, (joe_frozen)          ; being told off: can't move
+        or a
+        jr z, 1F
+        dec a
+        ld (joe_frozen), a
+        ret
+1:
         ld a, (input)
         ld e, a
 
@@ -205,5 +212,6 @@ joe_x:          dw 0
 joe_y:          db 0
 joe_facing:     db 0                    ; 0 = right, 1 = left
 joe_flags:      db 0
+joe_frozen:     db 0                    ; frames left being told off
 bucket_count:   db 0                    ; drops in the bucket
 bucket_colour:  db 0                    ; slop colour index

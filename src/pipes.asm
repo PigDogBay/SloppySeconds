@@ -171,7 +171,7 @@ pipe_step:
         ; splat
         dec (ix + PIPE.timer)
         ret nz
-        jr pipe_start_wait
+        jp pipe_start_wait
 
 .wait:
         dec (ix + PIPE.timer)
@@ -198,7 +198,8 @@ pipe_step:
         ld a, (iy + PSL_NOZZLE_Y)
         ld (ix + PIPE.drop_y), a
         ld (ix + PIPE.state), PS_FALL
-        ret
+        ld a, SFX_DRIP
+        jp sfx_play
 
 .fall:
         ld a, (ix + PIPE.drop_y)
@@ -230,11 +231,15 @@ pipe_step:
         ret nc
         ld a, SCORE_CATCH
         call add_wages
+        ld a, SFX_CATCH
+        call sfx_play
         jr pipe_start_wait
 
 .missed:
         ld (ix + PIPE.state), PS_SPLAT
         ld (ix + PIPE.timer), SPLAT_TIME
+        ld a, SFX_SPLAT
+        call sfx_play
         ld a, CYNICISM_MISS
         jp add_cynicism
 
@@ -336,6 +341,8 @@ pipes_bang:
         pop bc
         ld a, SCORE_BANG
         call add_wages
+        ld a, SFX_BANG
+        call sfx_play
         scf
         ret
 .skip:

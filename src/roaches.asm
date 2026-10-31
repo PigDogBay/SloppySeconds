@@ -258,6 +258,8 @@ roaches_stomp:
         pop bc
         ld a, SCORE_STOMP
         call add_wages
+        ld a, SFX_STOMP
+        call sfx_play
         scf
         ret
 .skip:

@@ -21,6 +21,8 @@ PAT_TUB             equ PAT_SPLAT + SLOP_COLOURS
 PAT_SNACK           equ PAT_TUB + SLOP_COLOURS  ; coffee, chocolate, apple
 PAT_ROACH           equ PAT_SNACK + 3           ; 2 walking frames
 PAT_ROACH_SQUASH    equ PAT_ROACH + 2
+PAT_KNUT_TOP        equ PAT_ROACH_SQUASH + 1
+PAT_KNUT_BOTTOM     equ PAT_KNUT_TOP + 1
 
 ; --- Sprite slots (draw order: later = on top) ---
 SPR_JOE_TOP         equ 0
@@ -30,6 +32,8 @@ SPR_DROP            equ 7               ; 6 drops, one per pipe
 SPR_BUCKET          equ 13
 SPR_SNACK           equ 14
 SPR_ROACH           equ 15              ; 3 cockroaches
+SPR_KNUT_TOP        equ 18
+SPR_KNUT_BOTTOM     equ 19
 
 ATTR2_MIRROR_X      equ %00001000
 
@@ -50,6 +54,12 @@ sprites_init:
         call build_joe_patterns
         call build_snack_patterns
         call build_roach_patterns
+        ld hl, knut_top_rects
+        ld a, PAT_KNUT_TOP
+        call pat_build_list
+        ld hl, knut_bottom_rects
+        ld a, PAT_KNUT_BOTTOM
+        call pat_build_list
         jp build_slop_patterns
 
 ; In: A = sprite slot, HL = x (9 bits), E = y, D = pattern,
@@ -156,6 +166,30 @@ pat_rect:
         pop bc
         djnz .row
         ret
+
+; Build a pattern from a rect list and upload it to slot A.
+; HL = list of (x, y, w, h, colour) entries, ended by $FF. Laid out like
+; pr_x..pr_colour, so each entry is copied straight in (5 bytes a rect,
+; against about 25 for a PAT_RECT macro).
+pat_build_list:
+        push af
+        push hl
+        call pat_clear
+        pop hl
+.next:
+        ld a, (hl)
+        cp $FF
+        jr z, .done
+        ld de, pr_x
+        ld bc, 5
+        ldir
+        push hl
+        call pat_rect
+        pop hl
+        jr .next
+.done:
+        pop af
+        ; fall through
 
 ; Upload pat_buf to pattern slot A.
 pat_upload:

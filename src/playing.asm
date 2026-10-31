@@ -24,6 +24,7 @@ playing_enter:
         call tubs_reset
         call snacks_reset
         call roaches_reset
+        call knut_reset
         call draw_playfield
         jp screen_end
 
@@ -57,6 +58,7 @@ playing_update:
         call try_deposit
         call pipes_update
         call roaches_update
+        call knut_update
         call tubs_draw
         call joe_draw
         call hud_update
@@ -77,6 +79,9 @@ playing_update:
 
 ; Fire: stomp a cockroach at Joe's feet, otherwise bang a pipe.
 joe_fire:
+        ld a, (joe_frozen)
+        or a
+        ret nz
         call roaches_stomp
         ret c
         jp pipes_bang
@@ -105,7 +110,12 @@ try_deposit:
         set HUD_STATUS, (hl)
         ld a, SCORE_DEPOSIT
         call add_wages
+        ld a, SFX_DEPOSIT
+        jr .sound
 .wrong:                             ; wrong tub: the slop is lost
+        ld a, SFX_WRONG
+.sound:
+        call sfx_play
         scf
         ret
 .no:

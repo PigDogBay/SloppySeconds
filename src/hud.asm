@@ -124,6 +124,15 @@ hud_draw_wages:
 
 hud_draw_status:
         FILL_RECT 0, STATUS_Y - 2, SCREEN_W, 12, COL_BELT
+        ld hl, (hud_message)        ; a message (e.g. Mr Knut) overrides it
+        ld a, h
+        or l
+        jr z, 1F
+        push hl
+        TEXT 0, STATUS_Y, COL_MESSAGE, 1
+        pop hl
+        jp print_centred
+1:
         call str_start
         call str_append_day
         ld hl, str_hud_buckets
@@ -139,6 +148,7 @@ hud_draw_status:
         jp print_centred
 
 hud_dirty:          db 0
+hud_message:        dw 0                ; 0 = normal status line
 
 str_hud_cynicism:   db "CYNICISM", 0
 str_hud_wages:      db "WAGES: ", 0

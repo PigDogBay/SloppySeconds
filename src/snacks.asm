@@ -11,14 +11,14 @@
 SNACK_TYPES         equ 3
 SNACK_LIFE          equ 250             ; 5 s at 50 Hz
 SNACK_WARN          equ 75              ; flash for the last 1.5 s
-SNACK_GAP_MIN       equ 500             ; 10 s; plus up to ~5 s random
+SNACK_GAP_MIN       equ 250             ; 5 s; plus up to ~5 s random
 SNACK_MIN_Y         equ JOE_MIN_Y + 16
 SNACK_Y_RANGE       equ TUB_Y - 24 - SNACK_MIN_Y
 SNACK_HALF_W        equ 136             ; x range within each half
         ASSERT SNACK_Y_RANGE > 0 && SNACK_Y_RANGE < 256
 
 ; Per snack type: cynicism removed, price (pence, taken from wages)
-snack_relief:       db 10, 15, 8        ; coffee, chocolate, apple
+snack_relief:       db 20, 30, 16       ; coffee, chocolate, apple
 snack_price:        db 5, 8, 4
 
 snacks_reset:
@@ -134,6 +134,8 @@ snacks_update:
         add hl, de
         ld a, (hl)
         call sub_wages
+        ld a, SFX_SNACK
+        call sfx_play
         ; fall through
 
 snack_finish:
