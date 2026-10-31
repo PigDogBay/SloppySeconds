@@ -70,7 +70,7 @@ Ask the user before installing anything.
 - **5 levels**, one per working day ("all 8 levels" in `description.txt` is a typo). The user wants the day name shown wherever a level number would be ("MONDAY", not "LEVEL 1"); the `LEVEL.day` field and `str_append_day` handle it. The spec's names stay as subtitles:
   1. Monday: Apprenticeship
   2. Tuesday: Get on with it!
-  3. Wednesday: El Stompo, which adds cockroaches that you stomp with fire.
+  3. Wednesday: Stomp The Roaches (renamed from the spec's "El Stompo" — user's choice), which adds cockroaches that you stomp with fire.
   4. Thursday: Meet Mr Knut, a random-walking manager who stuns Joe and adds cynicism.
   5. Friday: Knackered, which adds Chairman Fumduck (more damage) and a faster belt.
 - **Level quota = successful deposits** (a full bucket emptied into the tub of the matching colour), not number of colours: **5, 6, 10, 10, 15**. Wrong-tub deposits don't count; they play an error sound.

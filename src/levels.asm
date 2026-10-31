@@ -45,7 +45,7 @@ lvl1_desc:  db "TWO PIPES. RED AND BLUE SLOP.", 13
 lvl2_name:  db "GET ON WITH IT!", 0
 lvl2_desc:  db "FOUR PIPES, THREE COLOURS.", 13
             db "THE SLOP'S COMING FASTER.", 0
-lvl3_name:  db "EL STOMPO", 0
+lvl3_name:  db "STOMP THE ROACHES", 0
 lvl3_desc:  db "FOUR COLOURS - AND COCKROACHES!", 13
             db "WALK UP TO THEM AND STOMP WITH FIRE.", 0
 lvl4_name:  db "MEET MR KNUT", 0
