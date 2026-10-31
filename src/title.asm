@@ -59,6 +59,8 @@ title_enter:
         ld a, TITLE_STEP_FRAMES
         ld (title_step), a
         call screen_end
+        ld hl, theme_melody
+        ld de, theme_bass
         jp music_start
 
 title_update:

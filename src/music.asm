@@ -5,7 +5,8 @@
 ;
 ; A tune is one byte stream per voice. Each byte is (duration << 5) | note.
 ; Note 0 is a rest, notes 1-30 are semitones from F4 (see mus_periods), and
-; note 31 (MUS_LOOP) jumps back to the start. Each voice has a pitch shift
+; note 31 jumps back to the start (MUS_LOOP) or, with the longest
+; duration, ends the tune and goes quiet (MUS_END). Each voice has a pitch shift
 ; (in octaves) and a simple pluck envelope: start loud, fade to a floor.
 ; Every note goes quiet for its last frames so repeated notes don't blur.
 ;-----------------------------------------------------------------------------
@@ -24,6 +25,7 @@ vol_reg     BYTE 0
         ENDS
 
 MUS_LOOP            equ 31
+MUS_END             equ $FF
 MUS_GAP             equ 2               ; silent frames at the end of a note
 
 ; Durations at 150 bpm (frames)
@@ -90,15 +92,16 @@ mus_periods:
         dw 176, 166, 157, 148, 140, 132, 124, 117, 111, 105
         dw 99, 93, 88, 83, 78, 74, 70, 66, 62, 59
 
+; HL = melody stream, DE = bass stream.
 music_start:
+        push de
         ld ix, mus_voices
-        ld hl, theme_melody
         ld de, $0008                ; tone reg 0, volume reg 8
         ld bc, $D005                ; attack, decay
         call .voice
         ld (ix + VOICE.floor), $80  ; the melody sings on a little
         ld ix, mus_voices + VOICE
-        ld hl, theme_bass
+        pop hl
         ld de, $0209                ; tone reg 2, volume reg 9
         ld bc, $C00C                ; plucky
         call .voice
@@ -152,6 +155,8 @@ mus_voice:
         ld l, (ix + VOICE.ptr)
         ld h, (ix + VOICE.ptr + 1)
         ld a, (hl)
+        cp MUS_END
+        jr z, .ended
         and $1F
         cp MUS_LOOP
         jr nz, 1F
@@ -196,6 +201,12 @@ mus_voice:
         ld e, h
         call ay_write
         ld a, (ix + VOICE.attack)
+        ld (ix + VOICE.volume), a
+        jr .output
+
+.ended:                             ; stay on MUS_END, silent
+        ld (ix + VOICE.timer), 1
+        xor a
         ld (ix + VOICE.volume), a
         jr .output
 
@@ -266,6 +277,19 @@ theme_bass:
         db D4|C3, D4|G3, D4|E3, D4|G3                                   ; C
         db D4|C3, D4|G2, D4|C3, D4|R                                    ; C
         db MUS_LOOP
+
+;-----------------------------------------------------------------------------
+; "Clocking on" jingle for the start of each day: up the C chord, then
+; F - G - C. Plays once.
+;-----------------------------------------------------------------------------
+jingle_melody:
+        db D8|G4, D8|C5, D8|E5, D8|G5, D4|E5, D4|G5
+        db D8|F5, D8|A5, D8|B5, D8|D6, D2|C6
+        db MUS_END
+jingle_bass:
+        db D4|C3, D4|G3, D4|E3, D4|G3
+        db D4|F2, D4|G2, D2|C3
+        db MUS_END
 
 mus_voices:     ds VOICE * 2
 mus_playing:    db 0
