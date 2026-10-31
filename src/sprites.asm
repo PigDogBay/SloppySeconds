@@ -23,6 +23,8 @@ PAT_ROACH           equ PAT_SNACK + 3           ; 2 walking frames
 PAT_ROACH_SQUASH    equ PAT_ROACH + 2
 PAT_KNUT_TOP        equ PAT_ROACH_SQUASH + 1
 PAT_KNUT_BOTTOM     equ PAT_KNUT_TOP + 1
+PAT_FUM_TOP         equ PAT_KNUT_BOTTOM + 1
+PAT_FUM_BOTTOM      equ PAT_FUM_TOP + 1
 
 ; --- Sprite slots (draw order: later = on top) ---
 SPR_JOE_TOP         equ 0
@@ -34,6 +36,8 @@ SPR_SNACK           equ 14
 SPR_ROACH           equ 15              ; 3 cockroaches
 SPR_KNUT_TOP        equ 18
 SPR_KNUT_BOTTOM     equ 19
+SPR_FUM_TOP         equ 20
+SPR_FUM_BOTTOM      equ 21
 
 ATTR2_MIRROR_X      equ %00001000
 
@@ -59,6 +63,12 @@ sprites_init:
         call pat_build_list
         ld hl, knut_bottom_rects
         ld a, PAT_KNUT_BOTTOM
+        call pat_build_list
+        ld hl, fum_top_rects
+        ld a, PAT_FUM_TOP
+        call pat_build_list
+        ld hl, fum_bottom_rects
+        ld a, PAT_FUM_BOTTOM
         call pat_build_list
         jp build_slop_patterns
 

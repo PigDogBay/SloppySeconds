@@ -24,7 +24,7 @@ playing_enter:
         call tubs_reset
         call snacks_reset
         call roaches_reset
-        call knut_reset
+        call bosses_reset
         call draw_playfield
         jp screen_end
 
@@ -58,7 +58,7 @@ playing_update:
         call try_deposit
         call pipes_update
         call roaches_update
-        call knut_update
+        call bosses_update
         call tubs_draw
         call joe_draw
         call hud_update

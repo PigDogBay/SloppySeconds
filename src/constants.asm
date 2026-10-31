@@ -52,6 +52,10 @@ COL_ROACH_LEG       equ $24
 COL_KNUT_HAIR       equ $64
 COL_KNUT_TIE        equ $27
 COL_KNUT_SUIT       equ $49
+COL_FUM_HAIR        equ $B6
+COL_FUM_SUIT        equ $05
+COL_FUM_STRIPE      equ $4A
+COL_FUM_TIE         equ $E0
 COL_MESSAGE         equ $A0
 
 ; --- Screen geometry (Layer 2 320x256, sprite coords match 1:1) ---

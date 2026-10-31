@@ -22,6 +22,7 @@ SFX_WRONG           equ 5               ; wrong tub
 SFX_STOMP           equ 6
 SFX_KNUT            equ 7
 SFX_SNACK           equ 8
+SFX_FUMDUCK         equ 9
 
 ; frames, period, dperiod (per frame), volume 0-15, decay (16ths per frame),
 ; noise period (0 = none), notone (1 = noise only)
@@ -160,10 +161,10 @@ sfx_update:
         jp sfx_load
 
 sfx_priorities:
-        db 1, 2, 2, 3, 4, 4, 3, 5, 3
+        db 1, 2, 2, 3, 4, 4, 3, 5, 3, 5
 sfx_effects:
         dw sfx_drip, sfx_splat, sfx_bang, sfx_catch, sfx_deposit
-        dw sfx_wrong, sfx_stomp, sfx_knut, sfx_snack
+        dw sfx_wrong, sfx_stomp, sfx_knut, sfx_snack, sfx_fumduck
 
 sfx_drip:                                       ; a rising "plip"
         SFX_SEG 5, 220, -24, 8, $18, 0, 0
@@ -202,6 +203,12 @@ sfx_knut:                                       ; "OI!": a loud, falling honk
 sfx_snack:                                      ; the vending machine "ching"
         SFX_SEG 3, 120, 0, 12, 0, 0, 0
         SFX_SEG 12, 80, 0, 12, $10, 0, 0
+        SFX_END
+
+sfx_fumduck:                                    ; a deep, pompous "HARRUMPH"
+        SFX_SEG 8, 520, 0, 15, $04, 6, 0
+        SFX_SEG 3, 0, 0, 0, 0, 0, 0
+        SFX_SEG 20, 600, 12, 15, $0A, 0, 0
         SFX_END
 
 sfx_frames:     db 0
