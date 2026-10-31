@@ -118,7 +118,9 @@ rect_h:         db 0
 rect_colour:    db 0
 
 ;-----------------------------------------------------------------------------
-; Half disc with a flat bottom (arched windows, tree canopies, cloud puffs).
+; Half disc with a flat bottom (arched windows, tree canopies, cloud puffs),
+; or with disc_flip set, a flat top (HALF_DISC_DOWN). One of each with the
+; same centre makes a full circle (DISC).
 ; Parameters in disc_* (use HALF_DISC). If disc_grid is non-zero, the rim and
 ; a grid every GRID_MASK+1 pixels are drawn in that colour (window panes).
 ; Columns off the screen are skipped. r must be 1..127.
@@ -143,13 +145,13 @@ l2_half_disc:
         ld de, (disc_cx)
         add hl, de
         bit 7, h
-        jr nz, .next                ; x < 0
+        jp nz, .next                ; x < 0
         push hl
         ld de, SCREEN_W
         or a
         sbc hl, de
         pop hl
-        jr nc, .next                ; x >= 320
+        jp nc, .next                ; x >= 320
         call l2_page_column
         ld (disc_col_hi), a
 
@@ -189,8 +191,18 @@ l2_half_disc:
         ld h, a
         ld a, (disc_base)
         ld l, a
+        ld a, (disc_flip)
+        or a
+        jr z, .row
+        dec l                       ; downward: first row is base itself
 .row:
-        dec l
+        ld a, (disc_flip)
+        or a
+        jr nz, 1F
+        dec l                       ; up: base-1, base-2, ...
+        jr 2F
+1:      inc l                       ; down: base, base+1, ...
+2:
         ld a, (disc_grid)
         or a
         jr z, .solid
@@ -239,7 +251,30 @@ l2_half_disc:
         ld (disc_colour), a
         ld a, pgrid
         ld (disc_grid), a
+        xor a
+        ld (disc_flip), a
         call l2_half_disc
+        ENDM
+
+        MACRO HALF_DISC_DOWN pcx, ptop, pr, pcol
+        ld hl, pcx
+        ld (disc_cx), hl
+        ld a, ptop
+        ld (disc_base), a
+        ld a, pr
+        ld (disc_r), a
+        ld a, pcol
+        ld (disc_colour), a
+        xor a
+        ld (disc_grid), a
+        inc a
+        ld (disc_flip), a
+        call l2_half_disc
+        ENDM
+
+        MACRO DISC pcx, pcy, pr, pcol
+        HALF_DISC pcx, pcy, pr, pcol, 0
+        HALF_DISC_DOWN pcx, pcy, pr, pcol
         ENDM
 
 disc_cx:        dw 0
@@ -247,6 +282,7 @@ disc_base:      db 0
 disc_r:         db 0
 disc_colour:    db 0
 disc_grid:      db 0
+disc_flip:      db 0                    ; 0 = up from base, 1 = down
 disc_dx:        db 0
 disc_adx:       db 0
 disc_col_hi:    db 0

@@ -1,12 +1,9 @@
 ;-----------------------------------------------------------------------------
-; Full-screen states: level intro, level complete and the two endings.
-; (The title screen is in title.asm.)
+; Full-screen states: level intro, level complete and the retirement ending.
+; (The title screen is in title.asm, the beach game over in beach.asm.)
 ; Backgrounds are placeholder rectangles until real art (gfx2next) exists.
 ;-----------------------------------------------------------------------------
 
-COL_SKY             equ $5F
-COL_SEA             equ $0B
-COL_SAND            equ $F9
 COL_DARK            equ $24
 COL_GOLD            equ $F8
 
@@ -100,31 +97,6 @@ level_complete_update:
         ld a, ST_LEVEL_INTRO
         jp change_state
 
-;--- Game over: Joe quits and goes to the beach ------------------------------
-game_over_enter:
-        call screen_begin
-        ld a, COL_SKY
-        call l2_clear
-        FILL_RECT 0, 160, SCREEN_W, 40, COL_SEA
-        FILL_RECT 0, 200, SCREEN_W, 56, COL_SAND
-
-        TEXT 0, 24, COL_BLACK, 2
-        ld hl, str_quit_title
-        call print_centred
-        TEXT 0, 60, COL_BLACK, 1
-        ld hl, str_quit_text
-        call print_centred
-        TEXT 0, 212, COL_BLACK, 1
-        call print_wages_centred
-        TEXT 0, 232, COL_BLACK, 1
-        ld hl, str_press_fire
-        call print_centred
-        jp screen_end
-
-game_over_update:
-        ld a, ST_TITLE
-        jp wait_fire_then
-
 ;--- Game won: Joe retires with a cheap gold clock, then... ------------------
 game_won_enter:
         call screen_begin
@@ -169,12 +141,6 @@ str_buckets:        db " BUCKETS INTO THE RIGHT TUBS", 0
 str_press_fire:     db "PRESS FIRE", 0
 str_complete:       db "COMPLETE!", 0
 str_complete_sub:   db "NOT BAD, JOE. SAME AGAIN TOMORROW.", 0
-str_quit_title:     db "JOE'S HAD ENOUGH!", 0
-str_quit_text:      db "HE STORMED INTO THE CHAIRMAN'S OFFICE", 13
-                    db "AND TOLD FUMDUCK TO SHOVE THE JOB", 13
-                    db "WHERE THE SUN DON'T SHINE.", 13
-                    db 13
-                    db "NOW JOE GETS ALL THE SUN HE WANTS.", 0
 str_won_title:      db "JOE RETIRES!", 0
 str_won_text:       db "A LIFETIME OF SLOP.", 13
                     db "ONE CHEAP GOLD CLOCK.", 13
