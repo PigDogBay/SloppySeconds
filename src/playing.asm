@@ -36,12 +36,6 @@ playing_update:
         jp change_state
 1:
         IFNDEF RELEASE
-        bit INPUT_DEBUG1, a
-        jr z, 1F
-        ld a, (cur_quota)
-        ld (deposits), a
-1:
-        ld a, (input_new)
         bit INPUT_DEBUG2, a
         jr z, 1F
         ld a, CYNICISM_MAX

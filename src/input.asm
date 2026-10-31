@@ -14,7 +14,6 @@ INPUT_DOWN          equ 2
 INPUT_UP            equ 3
 INPUT_FIRE          equ 4
 INPUT_BREAK         equ 5
-INPUT_DEBUG1        equ 6               ; key N (test: finish level)
 INPUT_DEBUG2        equ 7               ; key 2 (test: Joe quits)
 
 input_read:
@@ -44,10 +43,6 @@ input_read:
 1:
         ld a, $7F                   ; SPACE SYM M N B
         in a, (PORT_ULA)
-        bit 3, a                    ; N
-        jr nz, 1F
-        set INPUT_DEBUG1, e
-1:
         bit 0, a                    ; SPACE
         jr nz, .no_space
         ld a, $FE                   ; CAPS Z X C V

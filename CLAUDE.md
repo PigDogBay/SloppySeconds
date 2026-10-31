@@ -49,7 +49,7 @@ There are no automated tests. To verify a change, build it with zero warnings, c
 - **Sprites:** the placeholder patterns are drawn in code (`PAT_RECT` into `pat_buf`, then `pat_upload`). `PAT_*` and `SPR_*` slot constants are in `sprites.asm`, and higher sprite slots draw on top. The bucket pattern is rebuilt whenever its contents change. Slop colour index → palette colour is in the `slop_colours` table.
 - **Memory is getting tight:** everything sits in bank 2 (`$8000-$BFFF`), and as of the beach screen the code ends around `$B0xx`, leaving about 4K. Before adding large things (music, more screens), plan to move data or code into other banks.
 - The `IX`/`IY` registers are used freely (interrupts are off, so the ROM never needs `IY`). The pipe loops use IX = runtime `PIPE` record and IY = static `pipe_slots` geometry.
-- Test keys are on by default: **N** finishes the level and **2** maxes out cynicism (Joe quits). `make RELEASE=1` leaves them out (`IFNDEF RELEASE` in `playing_update`).
+- Test key on by default: **2** maxes out cynicism (Joe quits). The N "finish level" key was removed at the user's request. `make RELEASE=1` leaves them out (`IFNDEF RELEASE` in `playing_update`).
 
 ## Toolchain (macOS arm64, under `/Users/mark/work/Next/tools/`)
 
