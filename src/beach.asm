@@ -45,7 +45,9 @@ game_over_enter:
         TEXT 0, 245, COL_BLACK, 1
         ld hl, str_press_fire
         call print_centred
-        jp screen_end
+        call screen_end
+        ld hl, tune_beach
+        jp music_start
 
 game_over_update:
         ld a, ST_TITLE

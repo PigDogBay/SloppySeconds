@@ -6,7 +6,8 @@
 ; A tune is one byte stream per voice. Each byte is (duration << 5) | note.
 ; Note 0 is a rest, notes 1-30 are semitones from F4 (see mus_periods), and
 ; note 31 jumps back to the start (MUS_LOOP) or, with the longest
-; duration, ends the tune and goes quiet (MUS_END). Each voice has a pitch shift
+; duration, ends the tune and goes quiet (MUS_END). MUS_SEGNO marks where
+; MUS_LOOP goes back to (by default, the start). Each voice has a pitch shift
 ; (in octaves) and a simple pluck envelope: start loud, fade to a floor.
 ; Every note goes quiet for its last frames so repeated notes don't blur.
 ;-----------------------------------------------------------------------------
@@ -26,6 +27,7 @@ vol_reg     BYTE 0
 
 MUS_LOOP            equ 31
 MUS_END             equ $FF
+MUS_SEGNO           equ (1 << 5) | 31
 MUS_GAP             equ 2               ; silent frames at the end of a note
 
 ; Durations at 150 bpm (frames)
@@ -39,6 +41,7 @@ D2D                 equ 6 << 5          ; 60
 D1                  equ 7 << 5          ; 80
 
 mus_durations:      db 5, 10, 15, 20, 30, 40, 60, 80
+mus_durations_slow: db 6, 12, 18, 24, 36, 48, 72, 96     ; 125 bpm
 
 ; Notes: semitones from F4 (index 1). Shift down two octaves for the bass.
 R                   equ 0
@@ -74,8 +77,10 @@ A6  equ 29
 AS6 equ 30
 ; Bass names (played two octaves down)
 F2  equ F4
+FS2 equ FS4
 G2  equ G4
 A2  equ A4
+AS2 equ AS4
 B2  equ B4
 C3  equ C5
 CS3 equ CS5
@@ -92,16 +97,29 @@ mus_periods:
         dw 176, 166, 157, 148, 140, 132, 124, 117, 111, 105
         dw 99, 93, 88, 83, 78, 74, 70, 66, 62, 59
 
-; HL = melody stream, DE = bass stream.
+; A tune header: melody stream, bass stream, durations table, then the
+; melody's decay and floor (its "instrument").
+        MACRO TUNE p1, p2, p3, p4, p5     ; melody, bass, durations, decay, floor
+        dw p1, p2, p3
+        db p4, p5
+        ENDM
+
+; HL = tune header.
 music_start:
-        push de
+        ld de, mus_tune
+        ld bc, 8
+        ldir
         ld ix, mus_voices
+        ld hl, (mus_tune)
         ld de, $0008                ; tone reg 0, volume reg 8
-        ld bc, $D005                ; attack, decay
+        ld a, (mus_tune + 6)
+        ld c, a
+        ld b, $D0                   ; attack
         call .voice
-        ld (ix + VOICE.floor), $80  ; the melody sings on a little
+        ld a, (mus_tune + 7)
+        ld (ix + VOICE.floor), a
         ld ix, mus_voices + VOICE
-        pop hl
+        ld hl, (mus_tune + 2)
         ld de, $0209                ; tone reg 2, volume reg 9
         ld bc, $C00C                ; plucky
         call .voice
@@ -157,8 +175,13 @@ mus_voice:
         ld a, (hl)
         cp MUS_END
         jr z, .ended
-        and $1F
-        cp MUS_LOOP
+        cp MUS_SEGNO
+        jr nz, 2F
+        inc hl                      ; loop back to just after here
+        ld (ix + VOICE.start), l
+        ld (ix + VOICE.start + 1), h
+        jr 1F
+2:      cp MUS_LOOP
         jr nz, 1F
         ld l, (ix + VOICE.start)
         ld h, (ix + VOICE.start + 1)
@@ -171,7 +194,7 @@ mus_voice:
         rlca
         rlca
         and 7
-        ld hl, mus_durations
+        ld hl, (mus_tune + 4)       ; this tune's durations
         add hl, a
         ld a, (hl)
         ld (ix + VOICE.timer), a
@@ -291,6 +314,62 @@ jingle_bass:
         db D4|F2, D4|G2, D2|C3
         db MUS_END
 
+;-----------------------------------------------------------------------------
+; Retirement: a chirpy fanfare, a pause, then Chopin's funeral march (in
+; B flat minor, at half speed: every note value is doubled), looping.
+;-----------------------------------------------------------------------------
+retire_melody:
+        db D16|C6, D16|D6, D16|E6, D16|G6, D8|E6, D8|C6, D8|D6, D8|E6, D4|C6
+        db D8|G5, D8|A5, D8|B5, D8|D6, D4|C6, D4|R
+        db D2|R
+        db MUS_SEGNO
+        db D2|AS4, D4D|AS4, D8|AS4, D1|AS4
+        db D4D|CS5, D8|C5, D4D|C5, D8|AS4, D4D|AS4, D8|A4, D2|AS4
+        db D2|AS4, D4D|AS4, D8|AS4, D1|AS4
+        db D4D|CS5, D8|C5, D4D|C5, D8|AS4, D4D|AS4, D8|A4, D2|AS4
+        db MUS_LOOP
+retire_bass:
+        db D8|C3, D8|G3, D8|E3, D8|G3, D8|C3, D8|G3, D8|E3, D8|G3
+        db D4|F3, D4|G3, D4|C3, D4|R
+        db D2|R
+        db MUS_SEGNO
+        db D2|AS2, D2|FS2, D2|AS2, D2|FS2
+        db D2|AS2, D2|FS2, D2|AS2, D2|FS2
+        db D2|AS2, D2|FS2, D2|AS2, D2|FS2
+        db D2|AS2, D2|FS2, D2|AS2, D2|FS2
+        db MUS_LOOP
+
+;-----------------------------------------------------------------------------
+; Beach: a laid-back calypso in F at 125 bpm. Steel-pan melody (quick fade)
+; over a 3-3-2 bass. Chords: F C7 C7 F | Bb F C7 F
+;-----------------------------------------------------------------------------
+beach_melody:
+        db D8|C6, D4|A5, D8|F5, D8|R, D8|A5, D8|C6, D8|D6               ; F
+        db D4D|C6, D4D|AS5, D4|G5                                       ; C7
+        db D8|E5, D4|G5, D8|AS5, D8|R, D8|AS5, D8|A5, D8|G5             ; C7
+        db D4D|A5, D4D|F5, D4|R                                         ; F
+        db D8|D6, D4|D6, D8|D6, D8|R, D8|C6, D8|AS5, D8|A5              ; Bb
+        db D4D|C6, D4D|A5, D4|F5                                        ; F
+        db D8|G5, D4|AS5, D8|A5, D8|G5, D8|E5, D4|G5                    ; C7
+        db D4D|F5, D8|C5, D2|F5                                         ; F
+        db MUS_LOOP
+beach_bass:
+        db D4D|F2, D4D|C3, D4|F3                                        ; F
+        db D4D|C3, D4D|G3, D4|AS2                                       ; C7
+        db D4D|C3, D4D|G2, D4|E3                                        ; C7
+        db D4D|F2, D4D|C3, D4|A2                                        ; F
+        db D4D|AS2, D4D|F3, D4|D3                                       ; Bb
+        db D4D|F2, D4D|C3, D4|F3                                        ; F
+        db D4D|C3, D4D|G3, D4|E3                                        ; C7
+        db D4D|F2, D4D|C3, D4|F2                                        ; F
+        db MUS_LOOP
+
+tune_theme:     TUNE theme_melody, theme_bass, mus_durations, $05, $80
+tune_jingle:    TUNE jingle_melody, jingle_bass, mus_durations, $05, $80
+tune_retire:    TUNE retire_melody, retire_bass, mus_durations, $05, $80
+tune_beach:     TUNE beach_melody, beach_bass, mus_durations_slow, $0A, $30
+
+mus_tune:       ds 8                ; the current tune's header
 mus_voices:     ds VOICE * 2
 mus_playing:    db 0
 mus_mixer:      db $3F              ; mixer bits for A/B (C added by sfx)

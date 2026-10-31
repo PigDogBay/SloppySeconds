@@ -53,8 +53,7 @@ level_intro_enter:
         ld hl, str_press_fire
         call print_centred
         call screen_end
-        ld hl, jingle_melody
-        ld de, jingle_bass
+        ld hl, tune_jingle
         jp music_start
 
 level_intro_update:

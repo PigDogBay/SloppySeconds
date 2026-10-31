@@ -61,7 +61,9 @@ game_won_enter:
         TEXT 0, 240, COL_YELLOW, 1
         ld hl, str_press_fire
         call print_centred
-        jp screen_end
+        call screen_end
+        ld hl, tune_retire
+        jp music_start
 
 game_won_update:
         ld a, ST_TITLE
