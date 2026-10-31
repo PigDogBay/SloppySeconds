@@ -97,6 +97,14 @@ level_load:
         ld (cur_belt_speed), a
         ld a, (ix + LEVEL.flags)
         ld (cur_flags), a
+        ld l, (ix + LEVEL.roach_gap)
+        ld h, (ix + LEVEL.roach_gap + 1)
+        ld (cur_roach_gap), hl
+        ld l, (ix + LEVEL.snack_gap)
+        ld h, (ix + LEVEL.snack_gap + 1)
+        ld (cur_snack_gap), hl
+        ld a, (ix + LEVEL.snacks)
+        ld (cur_snacks), a
         xor a
         ld (deposits), a
         ld (cynicism), a            ; each level starts calm
@@ -125,3 +133,6 @@ cur_quota:      db 5
 cur_ooze_delay: db 8
 cur_belt_speed: db 1
 cur_flags:      db 0                    ; LVF_*
+cur_roach_gap:  dw 300                  ; frames
+cur_snack_gap:  dw 500
+cur_snacks:     db 1                    ; most snacks out at once

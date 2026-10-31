@@ -32,12 +32,12 @@ SPR_JOE_BOTTOM      equ 1
 SPR_TUB             equ 2               ; 5 tubs
 SPR_DROP            equ 7               ; 6 drops, one per pipe
 SPR_BUCKET          equ 13
-SPR_SNACK           equ 14
 SPR_ROACH           equ 15              ; 3 cockroaches
 SPR_KNUT_TOP        equ 18
 SPR_KNUT_BOTTOM     equ 19
 SPR_FUM_TOP         equ 20
 SPR_FUM_BOTTOM      equ 21
+SPR_SNACK           equ 22              ; MAX_SNACKS snacks
 
 ATTR2_MIRROR_X      equ %00001000
 

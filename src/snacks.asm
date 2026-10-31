@@ -1,60 +1,104 @@
 ;-----------------------------------------------------------------------------
 ; Vending machine snacks
 ;
-; Every SNACK_GAP_MIN + 0..255 frames a snack (coffee, chocolate or an apple)
-; appears on the half of the floor away from Joe. It lasts SNACK_LIFE frames,
-; flashing for the last SNACK_WARN. Walking into it lowers cynicism, but Joe
-; has to pay for it out of his wages (which never go below 0).
-; Only one snack is out at a time.
+; Every cur_snack_gap + 0..255 frames (set per level) a snack (coffee,
+; chocolate or an apple) appears on the half of the floor away from Joe, if
+; fewer than cur_snacks are out. Each lasts SNACK_LIFE frames, flashing for
+; the last SNACK_WARN. Walking into one lowers cynicism, but Joe has to pay
+; for it out of his wages (which never go below 0).
 ;-----------------------------------------------------------------------------
 
+MAX_SNACKS          equ 3
 SNACK_TYPES         equ 3
 SNACK_LIFE          equ 250             ; 5 s at 50 Hz
 SNACK_WARN          equ 75              ; flash for the last 1.5 s
-SNACK_GAP_MIN       equ 250             ; 5 s; plus up to ~5 s random
 SNACK_MIN_Y         equ JOE_MIN_Y + 16
 SNACK_Y_RANGE       equ TUB_Y - 24 - SNACK_MIN_Y
 SNACK_HALF_W        equ 136             ; x range within each half
         ASSERT SNACK_Y_RANGE > 0 && SNACK_Y_RANGE < 256
+
+        STRUCT SNACK
+active      BYTE 0
+type        BYTE 0
+x           WORD 0
+y           BYTE 0
+timer       BYTE 0
+        ENDS
 
 ; Per snack type: cynicism removed, price (pence, taken from wages)
 snack_relief:       db 20, 30, 16       ; coffee, chocolate, apple
 snack_price:        db 5, 8, 4
 
 snacks_reset:
-        xor a
-        ld (snack_active), a
+        ld ix, snacks
+        ld b, MAX_SNACKS
         ld a, SPR_SNACK
+.next:
+        ld (ix + SNACK.active), 0
+        push af
+        push bc
         call sprite_hide
+        pop bc
+        pop af
+        inc a
+        ld de, SNACK
+        add ix, de
+        djnz .next
         ; fall through
 
 snack_start_gap:
         ld e, 255
         call rand_below
-        ld hl, SNACK_GAP_MIN
+        ld hl, (cur_snack_gap)
         add hl, a
         ld (snack_gap), hl
         ret
 
 snacks_update:
-        ld a, (snack_active)
-        or a
-        jr nz, .active
         ld hl, (snack_gap)
         dec hl
         ld (snack_gap), hl
         ld a, h
         or l
-        ret nz
+        call z, snack_spawn
 
-        ; Spawn: random type, random spot on the far side from Joe
+        ld ix, snacks
+        xor a
+        ld (snack_index), a
+.next:
+        call snack_step
+        ld de, SNACK
+        add ix, de
+        ld hl, snack_index
+        inc (hl)
+        ld a, (hl)
+        cp MAX_SNACKS
+        jr c, .next
+        ret
+
+; Put out a new snack if one of the first cur_snacks slots is free:
+; random type, random spot on the far side from Joe.
+snack_spawn:
+        call snack_start_gap
+        ld ix, snacks
+        ld a, (cur_snacks)
+        ld b, a
+.find:
+        ld a, (ix + SNACK.active)
+        or a
+        jr z, .found
+        ld de, SNACK
+        add ix, de
+        djnz .find
+        ret                         ; enough out already
+.found:
         ld e, SNACK_TYPES
         call rand_below
-        ld (snack_type), a
+        ld (ix + SNACK.type), a
         ld e, SNACK_Y_RANGE
         call rand_below
         add a, SNACK_MIN_Y
-        ld (snack_y), a
+        ld (ix + SNACK.y), a
         ld e, SNACK_HALF_W
         call rand_below
         add a, 16
@@ -69,41 +113,46 @@ snacks_update:
         jr nc, 1F                   ; Joe on the right: snack on the left
         ld de, SCREEN_W / 2 - 8
         add hl, de
-1:      ld (snack_x), hl
-        ld a, SNACK_LIFE
-        ld (snack_timer), a
-        ld a, 1
-        ld (snack_active), a
+1:      ld (ix + SNACK.x), l
+        ld (ix + SNACK.x + 1), h
+        ld (ix + SNACK.timer), SNACK_LIFE
+        ld (ix + SNACK.active), 1
         ret
 
-.active:
-        ld hl, snack_timer
-        dec (hl)
+; One frame for the snack at IX (slot snack_index).
+snack_step:
+        ld a, (ix + SNACK.active)
+        or a
+        ret z
+        dec (ix + SNACK.timer)
         jr z, snack_finish          ; time's up
 
         ; Draw, blinking when nearly gone
-        ld a, (hl)
+        ld a, (ix + SNACK.timer)
         cp SNACK_WARN
         jr nc, .show
         and 4
         jr z, .show
-        ld a, SPR_SNACK
+        ld a, (snack_index)
+        add a, SPR_SNACK
         call sprite_hide
         jr .collide
 .show:
-        ld hl, (snack_x)
-        ld a, (snack_y)
-        ld e, a
-        ld a, (snack_type)
+        ld l, (ix + SNACK.x)
+        ld h, (ix + SNACK.x + 1)
+        ld e, (ix + SNACK.y)
+        ld a, (ix + SNACK.type)
         add a, PAT_SNACK
         ld d, a
         ld c, 0
-        ld a, SPR_SNACK
+        ld a, (snack_index)
+        add a, SPR_SNACK
         call sprite_show
 
 .collide:
         ld hl, (joe_x)
-        ld de, (snack_x)
+        ld e, (ix + SNACK.x)
+        ld d, (ix + SNACK.x + 1)
         call abs_diff16
         ld a, h
         or a
@@ -113,25 +162,21 @@ snacks_update:
         ret nc
         ld a, (joe_y)               ; snack y within joe_y-12 .. joe_y+28
         ld b, a
-        ld a, (snack_y)
+        ld a, (ix + SNACK.y)
         sub b
         add a, 12
         cp 41
         ret nc
 
         ; Collected
-        ld a, (snack_type)
-        ld e, a
-        ld d, 0
+        ld a, (ix + SNACK.type)
         ld hl, snack_relief
-        add hl, de
+        add hl, a
         ld a, (hl)
         call sub_cynicism
-        ld a, (snack_type)
-        ld e, a
-        ld d, 0
+        ld a, (ix + SNACK.type)
         ld hl, snack_price
-        add hl, de
+        add hl, a
         ld a, (hl)
         call sub_wages
         ld a, SFX_SNACK
@@ -139,15 +184,11 @@ snacks_update:
         ; fall through
 
 snack_finish:
-        xor a
-        ld (snack_active), a
-        ld a, SPR_SNACK
-        call sprite_hide
-        jp snack_start_gap
+        ld (ix + SNACK.active), 0
+        ld a, (snack_index)
+        add a, SPR_SNACK
+        jp sprite_hide
 
-snack_active:   db 0
-snack_type:     db 0
-snack_x:        dw 0
-snack_y:        db 0
-snack_timer:    db 0
+snacks:         ds SNACK * MAX_SNACKS
 snack_gap:      dw 0
+snack_index:    db 0

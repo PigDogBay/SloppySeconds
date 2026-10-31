@@ -21,16 +21,19 @@ flags       BYTE 0      ; LVF_*
 day         WORD 0      ; day of the week, shown instead of "level N"
 name        WORD 0      ; 0-terminated name
 desc        WORD 0      ; intro text, lines separated by 13
+roach_gap   WORD 0      ; frames between cockroaches (plus up to ~5 s)
+snack_gap   WORD 0      ; frames between snacks (plus up to ~5 s)
+snacks      BYTE 0      ; most snacks out at once (1-MAX_SNACKS)
         ENDS
 
 LEVEL_COUNT         equ 5
 
 levels:
-        LEVEL { 2, 2,  5, 12, 1, 0,                                  day_mon, lvl1_name, lvl1_desc }
-        LEVEL { 4, 3,  6, 11, 1, 0,                                  day_tue, lvl2_name, lvl2_desc }
-        LEVEL { 4, 4, 10, 10, 1, LVF_COCKROACH,                      day_wed, lvl3_name, lvl3_desc }
-        LEVEL { 4, 5, 10, 9, 1, LVF_COCKROACH|LVF_KNUT,             day_thu, lvl4_name, lvl4_desc }
-        LEVEL { 6, 7, 15, 8, 2, LVF_COCKROACH|LVF_KNUT|LVF_FUMDUCK, day_fri, lvl5_name, lvl5_desc }
+        LEVEL { 2, 2,  5, 12, 1, 0,                                  day_mon, lvl1_name, lvl1_desc, 300, 500, 1 }
+        LEVEL { 4, 3,  6, 11, 1, 0,                                  day_tue, lvl2_name, lvl2_desc, 300, 500, 1 }
+        LEVEL { 4, 4, 10, 10, 1, LVF_COCKROACH,                      day_wed, lvl3_name, lvl3_desc, 300, 500, 1 }
+        LEVEL { 4, 5, 10, 9, 1, LVF_COCKROACH|LVF_KNUT,             day_thu, lvl4_name, lvl4_desc, 600, 100, 3 }
+        LEVEL { 6, 7, 15, 8, 2, LVF_COCKROACH|LVF_KNUT|LVF_FUMDUCK, day_fri, lvl5_name, lvl5_desc, 600, 100, 3 }
         ASSERT $ - levels == LEVEL_COUNT * LEVEL
 
 day_mon:    db "MONDAY", 0

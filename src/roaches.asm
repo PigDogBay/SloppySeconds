@@ -9,7 +9,6 @@
 
 MAX_ROACHES         equ 3
 ROACH_TICK          equ 100             ; frames per cynicism point, per roach
-ROACH_SPAWN_MIN     equ 300             ; 6 s; plus up to ~5 s random
 ROACH_SQUASH_TIME   equ 25
 ROACH_MIN_X         equ 0
 ROACH_MAX_X         equ SCREEN_W - 16
@@ -45,7 +44,7 @@ roaches_reset:
 roach_start_gap:
         ld e, 255
         call rand_below
-        ld hl, ROACH_SPAWN_MIN
+        ld hl, (cur_roach_gap)      ; per level, plus up to ~5 s
         add hl, a
         ld (roach_gap), hl
         ret
