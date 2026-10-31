@@ -288,3 +288,82 @@ disc_adx:       db 0
 disc_col_hi:    db 0
 disc_r2:        dw 0
 disc_dx2:       dw 0
+
+;-----------------------------------------------------------------------------
+; Shape lists: compact scene data (7 bytes a rect vs ~23 for FILL_RECT).
+; Each entry starts with a type byte; the bytes after it are laid out exactly
+; like the rect_* / disc_* variables, so they're copied straight in.
+;   S_RECT x, y, w, h, colour
+;   S_HALF cx, base, r, colour, grid     (flat bottom, like HALF_DISC)
+;   S_HALF_DOWN cx, top, r, colour       (flat top)
+;   S_DISC cx, cy, r, colour             (full circle)
+;   S_END
+;-----------------------------------------------------------------------------
+SH_END              equ 0
+SH_RECT             equ 1
+SH_HALF             equ 2
+SH_HALF_DOWN        equ 3
+SH_DISC             equ 4
+
+        MACRO S_RECT px, py, pw, ph, pcol
+        db SH_RECT
+        dw px, pw
+        db py, ph, pcol
+        ENDM
+        MACRO S_HALF pcx, pbase, pr, pcol, pgrid
+        db SH_HALF
+        dw pcx
+        db pbase, pr, pcol, pgrid
+        ENDM
+        MACRO S_HALF_DOWN pcx, ptop, pr, pcol
+        db SH_HALF_DOWN
+        dw pcx
+        db ptop, pr, pcol, 0
+        ENDM
+        MACRO S_DISC pcx, pcy, pr, pcol
+        db SH_DISC
+        dw pcx
+        db pcy, pr, pcol, 0
+        ENDM
+        MACRO S_END
+        db SH_END
+        ENDM
+
+; Draw the shape list at HL.
+draw_shapes:
+        ld a, (hl)
+        inc hl
+        or a
+        ret z
+        cp SH_RECT
+        jr nz, .disc
+        ld de, rect_x
+        ld bc, 7
+        ldir
+        push hl
+        call l2_fill_rect
+        pop hl
+        jr draw_shapes
+.disc:
+        ld de, disc_cx
+        ld bc, 6
+        ldir
+        push hl
+        ld b, a                     ; B = shape type
+        push bc
+        cp SH_HALF_DOWN
+        ld a, 0
+        jr nz, 1F
+        inc a
+1:      ld (disc_flip), a
+        call l2_half_disc
+        pop bc
+        ld a, b
+        cp SH_DISC
+        jr nz, .done
+        ld a, 1                     ; full circle: now the bottom half
+        ld (disc_flip), a
+        call l2_half_disc
+.done:
+        pop hl
+        jr draw_shapes

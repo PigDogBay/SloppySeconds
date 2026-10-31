@@ -1,11 +1,9 @@
 ;-----------------------------------------------------------------------------
-; Full-screen states: level intro, level complete and the retirement ending.
-; (The title screen is in title.asm, the beach game over in beach.asm.)
+; Full-screen states: level intro and level complete.
+; (Title: title.asm. Endings: beach.asm, retire.asm.)
 ; Backgrounds are placeholder rectangles until real art (gfx2next) exists.
 ;-----------------------------------------------------------------------------
 
-COL_DARK            equ $24
-COL_GOLD            equ $F8
 
 ; Common update for screens that just wait for fire.
 ; In: A = state to go to. Returns without switching if fire wasn't pressed.
@@ -97,32 +95,6 @@ level_complete_update:
         ld a, ST_LEVEL_INTRO
         jp change_state
 
-;--- Game won: Joe retires with a cheap gold clock, then... ------------------
-game_won_enter:
-        call screen_begin
-        ld a, COL_DARK
-        call l2_clear
-
-        TEXT 0, 32, COL_GOLD, 2
-        ld hl, str_won_title
-        call print_centred
-        TEXT 0, 68, COL_WHITE, 1
-        ld hl, str_won_text
-        call print_centred
-        TEXT 0, 148, COL_WHITE, 2
-        ld hl, str_rip
-        call print_centred
-        TEXT 0, 188, COL_WHITE, 1
-        call print_wages_centred
-        TEXT 0, 216, COL_YELLOW, 1
-        ld hl, str_press_fire
-        call print_centred
-        jp screen_end
-
-game_won_update:
-        ld a, ST_TITLE
-        jp wait_fire_then
-
 ;"WAGES: nP", centred at text_y in the current text style.
 print_wages_centred:
         call str_start
@@ -141,9 +113,3 @@ str_buckets:        db " BUCKETS INTO THE RIGHT TUBS", 0
 str_press_fire:     db "PRESS FIRE", 0
 str_complete:       db "COMPLETE!", 0
 str_complete_sub:   db "NOT BAD, JOE. SAME AGAIN TOMORROW.", 0
-str_won_title:      db "JOE RETIRES!", 0
-str_won_text:       db "A LIFETIME OF SLOP.", 13
-                    db "ONE CHEAP GOLD CLOCK.", 13
-                    db 13
-                    db "SHORTLY AFTERWARDS...", 0
-str_rip:            db "R.I.P. JOE", 0
